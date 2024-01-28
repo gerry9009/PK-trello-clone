@@ -16,7 +16,7 @@ class Group {
     this.notes.splice(id, 1);
   }
 
-  //  id : order number in NOTES - note : { title: string, about?: string }
+  // id : order number in NOTES - note : { title: string, about?: string }
   insertNote(id, note) {
     this.notes.splice(id, 1, note);
   }

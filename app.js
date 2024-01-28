@@ -26,7 +26,42 @@ GROUP_LIST.push(group4);
 
 console.log(GROUP_LIST);
 
-function renderGroup(name) {
+// mozgatott elem tulajdonságai
+
+// noteId -> tömbön belüli sorszám (group.note)
+// containGroup -> group GROUP_LIST-en belüli sorszáma
+// note -> note : { title, about }
+// pageY -> dragend esmény során tudjuk kinyerni
+const droppedNote = {};
+
+function resetDroppedNote() {
+  droppedNote.noteId = null;
+  droppedNote.groupId = null;
+  droppedNote.note = null;
+  droppedNote.pageY = null;
+}
+
+function dropGroupEventHandler(event, targetGroupId) {
+  if (targetGroupId !== droppedNote.groupId) {
+    const currentGroup = GROUP_LIST[droppedNote.groupId];
+    const targetGroup = GROUP_LIST[targetGroupId];
+
+    currentGroup.removeNote(droppedNote.noteId);
+    targetGroup.addNote(droppedNote.note);
+  }
+
+  resetDroppedNote();
+  render();
+}
+
+function dragEventHandler(event, note, noteId, groupId) {
+  droppedNote.noteId = noteId;
+  droppedNote.groupId = groupId;
+  droppedNote.note = note;
+  droppedNote.pageY = event.pageY - event.target.offsetHeight / 2;
+}
+
+function createGroupElement(name, targetGroupId) {
   // div HTML elemet
   const groupElement = document.createElement("div");
   // megadjuk a group nevét
@@ -36,12 +71,18 @@ function renderGroup(name) {
   groupElement.classList = "group";
   // eseményfigyelők
   // dragenter - dragover -dragleave - drop
+  groupElement.addEventListener("dragover", (event) => {
+    event.preventDefault();
+  });
 
+  groupElement.addEventListener("drop", (event) => {
+    dropGroupEventHandler(event, targetGroupId);
+  });
   // visszaadjuk a létrehozott elemet
   return groupElement;
 }
 
-function renderNote(note) {
+function createNoteElement(note, noteIndex, groupIndex) {
   // div HTML elemet
   const noteElement = document.createElement("div");
   // megadjuk a group nevét
@@ -53,21 +94,24 @@ function renderNote(note) {
   // osztályok hozzáadása
   noteElement.classList = "note";
   // eseményfigyelők
-  // dragenter - dragover -dragleave - drop
+  // dragstart - drag - dragend
+  noteElement.addEventListener("drag", (event) => {
+    dragEventHandler(event, note, noteIndex, groupIndex);
+  });
 
   // visszaadjuk a létrehozott elemet
   return noteElement;
 }
 
 function render() {
+  $groupContainer.innerHTML = "";
   // végig kell iterálni a GROUP_LIST
-  GROUP_LIST.map((group) => {
-    const groupElement = renderGroup(group.name);
-
+  GROUP_LIST.map((group, groupIndex) => {
+    const groupElement = createGroupElement(group.name, groupIndex);
     const notesArray = group.notes;
 
-    notesArray.map((note) => {
-      const noteElement = renderNote(note);
+    notesArray.map((note, noteIndex) => {
+      const noteElement = createNoteElement(note, noteIndex, groupIndex);
 
       groupElement.appendChild(noteElement);
     });
@@ -76,4 +120,5 @@ function render() {
   });
 }
 
+resetDroppedNote();
 render();
